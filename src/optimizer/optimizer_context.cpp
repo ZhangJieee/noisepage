@@ -5,6 +5,7 @@
 namespace noisepage::optimizer {
 
 GroupExpression *OptimizerContext::MakeGroupExpression(common::ManagedPointer<AbstractOptimizerNode> node) {
+  // 这里主要构建当前node + node.childs groups的关联关系
   std::vector<group_id_t> child_groups;
   for (auto &child : node->GetChildren()) {
     if (child->Contents()->GetOpType() == OpType::LEAF) {

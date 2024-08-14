@@ -21,12 +21,15 @@ void OptimizerTask::ConstructValidRules(GroupExpression *group_expr, const std::
                                         std::vector<RuleWithPromise> *valid_rules) {
   for (auto &rule : rules) {
     // Check if we can apply the rule
+    // 1.确认pattern是否和规则pattern匹配
     bool root_pattern_mismatch = group_expr->Contents()->GetOpType() != rule->GetMatchPattern()->Type();
+    // 2.确认该规则是否已经探测过
     bool already_explored = group_expr->HasRuleExplored(rule);
 
     // This check exists only as an "early" reject. As is evident, we do not check
     // the full patern here. Checking the full pattern happens when actually trying to
     // apply the rule (via a GroupExprBindingIterator).
+    // 3.确认child group个数是否满足规则
     bool child_pattern_mismatch =
         group_expr->GetChildrenGroupsSize() != rule->GetMatchPattern()->GetChildPatternsSize();
 
@@ -412,6 +415,7 @@ void BottomUpRewrite::Execute() {
   auto cur_group = GetMemo().GetGroupByID(group_id_);
   auto cur_group_expr = cur_group->GetLogicalExpression();
 
+  // 这里如果没有针对child expr进行优化,则创建新task,针对child expr进行优化
   if (!has_optimized_child_) {
     PushTask(new BottomUpRewrite(group_id_, context_, rule_set_name_, true));
 
@@ -425,10 +429,12 @@ void BottomUpRewrite::Execute() {
     return;
   }
 
+  // 这里根据rule name获取对应的规则集合,根据当前GroupExpression的信息，筛选出符合pattern的规则集合
   // Construct valid transformation rules from rule set
   std::vector<Rule *> set = GetRuleSet().GetRulesByName(rule_set_name_);
   ConstructValidRules(cur_group_expr, set, &valid_rules);
 
+  // 这里根据promise值进行排序
   // Sort so that we apply rewrite rules with higher promise first
   std::sort(valid_rules.begin(), valid_rules.end(), std::greater<>());
 

@@ -196,6 +196,7 @@ class GroupExpression {
    */
   std::vector<group_id_t> child_groups_;
 
+  // 标记已经探测过的规则
   /**
    * Mask of explored rules
    */
